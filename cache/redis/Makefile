@@ -19,3 +19,5 @@ delete:
 	@echo "Redis Stack container deleted"
 
 clean: stop delete
+
+# TODO: precise what version of redis instead of latest

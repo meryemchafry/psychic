@@ -1,7 +1,10 @@
+import json
 import os
 import uvicorn
 import uuid
 import pdb
+import redis
+import aioredis
 from fastapi import FastAPI, File, HTTPException, Depends, Body, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
@@ -62,6 +65,15 @@ app.add_middleware(
 bearer_scheme = HTTPBearer()
 
 
+# Synchronous Redis client for cache checking
+sync_redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# Func to create an asynchronous Redis pool for cache insertion
+async def create_redis_pool():
+    return await aioredis.from_url("redis://localhost")
+# TODO: put host in env var
+# TODO: check indexation on redis
+
 
 def validate_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     app_config = StateStore().get_config(credentials.credentials)
@@ -75,6 +87,12 @@ def validate_public_key(credentials: HTTPAuthorizationCredentials = Depends(bear
         raise HTTPException(status_code=401, detail="Invalid or missing token")
     return app_config
 
+def generate_cache_key(request: GetDocumentsRequest, config: AppConfig) -> str:
+    account_id = request.account_id
+    user_id = config.user_id
+    app_id = config.app_id
+    cache_key = f"{user_id}:{app_id}:{account_id}"
+    return cache_key
 
 @app.post(
     "/set-custom-connector-credentials",
@@ -331,6 +349,19 @@ async def get_documents(
     try:
         account_id = request.account_id
         uris = request.uris
+
+        # Check if data is in cache using synchronous Redis client
+        cache_key = generate_cache_key(request, config)
+        try:
+            cache_data = sync_redis_client.get(cache_key)
+            if cache_data:
+                # return data from cache
+                response_data = json.loads(cache_data)
+                return GetDocumentsResponse.parse_obj(response_data)
+        except Exception as e:
+            print(f"Error: Unable to get data from redis cache, err: {e}")
+         
+
         # If connector_id is not provided, return documents from all connectors
         if not request.connector_id:
             connections = StateStore().get_connections(
@@ -371,7 +402,16 @@ async def get_documents(
         response = result
         response.documents = documents
         logger.log_api_call(config, Event.get_documents, request, response, None)
+
+        # Add fetched documents to cache using asynchronous Redis client
+        try:
+            async_redis_pool = await create_redis_pool()
+            await async_redis_pool.set(cache_key, json.dumps(response.json()))
+        except Exception as e:
+            print(f"Error: Unable to fetch data to redis for caching, err: {e}")
+            
         return response
+    
     except Exception as e:
         logger.log_api_call(config, Event.get_documents, request, None, e)
         raise e

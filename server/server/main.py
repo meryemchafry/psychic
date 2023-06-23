@@ -406,7 +406,7 @@ async def get_documents(
         # Add fetched documents to cache using asynchronous Redis client
         try:
             async_redis_pool = await create_redis_pool()
-            await async_redis_pool.set(cache_key, json.dumps(response.json()))
+            await async_redis_pool.set(cache_key, response.json())
         except Exception as e:
             print(f"Error: Unable to fetch data to redis for caching, err: {e}")
             

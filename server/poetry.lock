@@ -1775,13 +1775,13 @@ trio = ["async_generator", "trio"]
 
 [[package]]
 name = "keyring"
-version = "24.0.1"
+version = "24.1.0"
 description = "Store and access your passwords safely."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "keyring-24.0.1-py3-none-any.whl", hash = "sha256:b3eaa3874e2cffeba2d73e3f275c83827156d0616a2160a610a60d63922ad24b"},
-    {file = "keyring-24.0.1.tar.gz", hash = "sha256:f77da625a448baa77906b099be9feaa29aa90979547506ac1ec422926085cee0"},
+    {file = "keyring-24.1.0-py3-none-any.whl", hash = "sha256:ade5e1e7710a7579d7c01e64a712926270239aba48055b1cdc6c022dd6d789b5"},
+    {file = "keyring-24.1.0.tar.gz", hash = "sha256:bd48a36612ef55505bf70e563528e3e66ba93267e344b6780cf6151f9c1eda6d"},
 ]
 
 [package.dependencies]
@@ -2908,13 +2908,13 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "7.3.2"
+version = "7.4.0"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest-7.3.2-py3-none-any.whl", hash = "sha256:cdcbd012c9312258922f8cd3f1b62a6580fdced17db6014896053d47cddf9295"},
-    {file = "pytest-7.3.2.tar.gz", hash = "sha256:ee990a3cc55ba808b80795a79944756f315c67c12b56abd3ac993a7b8c17030b"},
+    {file = "pytest-7.4.0-py3-none-any.whl", hash = "sha256:78bf16451a2eb8c7a2ea98e32dc119fd2aa758f1d5d66dbf0a59d69a3969df32"},
+    {file = "pytest-7.4.0.tar.gz", hash = "sha256:b4bf8c45bd59934ed84001ad51e11b4ee40d40a1229d2c79f9c592b0a3f6bd8a"},
 ]
 
 [package.dependencies]

@@ -1,0 +1,362 @@
+{
+	"info": {
+		"_postman_id": "f37b90b5-1b38-4aab-9725-c6bea049e792",
+		"name": "psychic-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17453286",
+		"_collection_link": "https://orange-shuttle-545476.postman.co/workspace/psychic~53c1f50f-b0ec-46f9-8600-83f8cb5243d3/collection/17453286-f37b90b5-1b38-4aab-9725-c6bea049e792?action=share&creator=17453286&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "Document",
+			"item": [
+				{
+					"name": "Get Documents - Notion",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer XXXXXXX",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"account_id\": \"notion_local_test1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://0.0.0.0:8080/get-documents",
+							"protocol": "http",
+							"host": [
+								"0",
+								"0",
+								"0",
+								"0"
+							],
+							"port": "8080",
+							"path": [
+								"get-documents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Documents - Zendesk",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer XXXXXXX",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"account_id\": \"zendesk_local_test1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://0.0.0.0:8080/get-documents",
+							"protocol": "http",
+							"host": [
+								"0",
+								"0",
+								"0",
+								"0"
+							],
+							"port": "8080",
+							"path": [
+								"get-documents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Documents - Zendesk - by URIs",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer XXXXXXX",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"account_id\": \"zendesk_local_test1\",\n  \"uris\": [\"https://meryem5759.zendesk.com/hc/en-us/articles/16461204089361-How-can-agents-leverage-knowledge-to-help-customers-\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://0.0.0.0:8080/get-documents",
+							"protocol": "http",
+							"host": [
+								"0",
+								"0",
+								"0",
+								"0"
+							],
+							"port": "8080",
+							"path": [
+								"get-documents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Documents - Zendesk - by Sections",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer XXXXXXX",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"account_id\": \"zendesk_local_test1\",\n  \"section_filter\": \"1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://0.0.0.0:8080/get-documents",
+							"protocol": "http",
+							"host": [
+								"0",
+								"0",
+								"0",
+								"0"
+							],
+							"port": "8080",
+							"path": [
+								"get-documents"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Section Filter",
+			"item": [
+				{
+					"name": "Add Section Filter - Notion",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer XXXXXXX",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"account_id\": \"notion_local_test1\",\n  \"connector_id\": \"notion\",\n  \"section_filter\": {\n        \"id\": \"1\",\n        \"sections\": [\n            {\n                \"id\": \"bc4ff677-fc28-471c-8a26-5dbe3e522660\",\n                \"name\": \"Getting Started\",\n                \"type\": \"folder\",\n                \"children\": []\n            }\n        ]\n  }\n}"
+						},
+						"url": {
+							"raw": "http://0.0.0.0:8080/add-section-filter",
+							"protocol": "http",
+							"host": [
+								"0",
+								"0",
+								"0",
+								"0"
+							],
+							"port": "8080",
+							"path": [
+								"add-section-filter"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Section Filter - Zendesk",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer XXXXXXX",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"account_id\": \"zendesk_local_test1\",\n  \"connector_id\": \"zendesk\",\n  \"section_filter\": {\n        \"id\": \"1\",\n        \"sections\": [\n            {\n                \"id\": \"16461204062993\",\n                \"name\": \"Announcements\",\n                \"type\": \"folder\",\n                \"children\": []\n            }\n        ]\n  }\n}"
+						},
+						"url": {
+							"raw": "http://0.0.0.0:8080/add-section-filter",
+							"protocol": "http",
+							"host": [
+								"0",
+								"0",
+								"0",
+								"0"
+							],
+							"port": "8080",
+							"path": [
+								"add-section-filter"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Connection",
+			"item": [
+				{
+					"name": "Delete Connection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer XXXXXXX",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"account_id\": \"zendesk_local_test1\",\n  \"connector_id\": \"zendesk\"\n}"
+						},
+						"url": {
+							"raw": "http://0.0.0.0:8080/delete-connection",
+							"protocol": "http",
+							"host": [
+								"0",
+								"0",
+								"0",
+								"0"
+							],
+							"port": "8080",
+							"path": [
+								"delete-connection"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Connection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer XXXXXXX",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"filter\": {\n    \"account_id\": \"zendesk_local_test1\"\n  }\n}"
+						},
+						"url": {
+							"raw": "http://0.0.0.0:8080/get-connections",
+							"protocol": "http",
+							"host": [
+								"0",
+								"0",
+								"0",
+								"0"
+							],
+							"port": "8080",
+							"path": [
+								"get-connections"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

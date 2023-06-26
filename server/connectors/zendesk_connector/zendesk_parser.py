@@ -35,6 +35,7 @@ class ZendeskParser:
 
         return articles
 
+    # TODO: def get_articles_by_uris_from_cache
 
     def get_all_articles(self, section_id: Optional[str] = None) -> list:
         articles = []
@@ -54,6 +55,8 @@ class ZendeskParser:
             base_url = data["next_page"]
 
         return articles
+    
+    # TODO: def get_all_articles_from_cache
     
     def list_sections(self) -> List[Section]:
         base_url = f"https://{self.subdomain}.zendesk.com/api/v2/help_center/sections.json"

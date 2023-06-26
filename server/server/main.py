@@ -78,12 +78,6 @@ sync_redis_client = redis.Redis(host='localhost', port=6379, decode_responses=Tr
 async def create_redis_pool():
     return await aioredis.from_url("redis://localhost")
 # TODO: put host in env var
-# TODO: check indexation on redis
-
-# ------- After SYNC
-# TODO: change user_is in generate_cache_key func to uri so --> {app_id}:{account_id}:{uri}
-# review TODO: implement zendesk filterinng logic first - uri, section 
-
 
 # Auth Funcs
 def validate_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
@@ -106,27 +100,33 @@ def generate_cache_key(request: GetDocumentsRequest, config: AppConfig) -> str:
     cache_key = f"{user_id}:{app_id}:{account_id}"
     return cache_key
 
-async def cache_documents(connector, response_filter, cache_key):
-    # Create a copy of the response_filter for the cache
-    cache_filter = dict(response_filter)  
-
-    # Omit URIs, section_filter & pagination from filter_kwargs
-    cache_filter['uris'] = None
-    cache_filter['section_filter_id'] = None
-    cache_filter['page_cursor'] = None
-    cache_filter['page_size'] = None
-
+async def cache_documents(config, account_id, connector_ids, cache_key):
     # Fetch documents for caching
-    cache_data = await connector.load(ConnectionFilter(**cache_filter))
+    documents = []
+    for connector_id in connector_ids:
+        connector = get_document_connector_for_id(connector_id, config)
+        if connector is None:
+            log.error(f"Could not find connector [connector_id: {connector_id}, account_id: {account_id}]")
+
+        result = await connector.load(
+            ConnectionFilter(                    
+                connector_id=connector_id, 
+                account_id=account_id, 
+            )
+        )
+        documents.extend(result.documents)
+
+    # Cache data is the list of documents of all connectors IDs
+    cache_data = result
 
     # Store the data in Redis cache
     if cache_data is not None:
         try:
             async_redis_pool = await create_redis_pool()
             await async_redis_pool.set(cache_key, cache_data.json())
-            log.info(f"Cache documents stored successfully [connector_id: {response_filter['connector_id']}, account_id: {response_filter['account_id']}]")
+            log.info(f"Cache documents stored successfully [connector_id: {connector_id}, account_id: {account_id}]")
         except Exception as e:
-            log.error(f"Unable to fetch data to Redis for caching [connector_id: {response_filter['connector_id']}, account_id: {response_filter['account_id']}], err: {e}")
+            log.error(f"Unable to fetch data to Redis for caching [connector_id: {connector_id}, account_id: {account_id}], err: {e}")
 
 
 # CRUD Operations
@@ -388,6 +388,7 @@ async def get_documents(
         chunked = request.chunked
         min_chunk_size = request.min_chunk_size
         max_chunk_size = request.max_chunk_size
+        documents = []
 
         # Check if data is in cache using synchronous Redis client
         cache_key = generate_cache_key(request, config)
@@ -411,7 +412,9 @@ async def get_documents(
         else:
             connector_ids = [request.connector_id]
 
-        documents = []
+        # Run the cache fetch operation in the background 
+        await cache_documents(config, account_id, connector_ids, cache_key)
+
         for connector_id in connector_ids:
             connector = get_document_connector_for_id(connector_id, config)
             if connector is None:
@@ -426,9 +429,6 @@ async def get_documents(
                 "page_size": request.page_size,
             }
             result = await connector.load(ConnectionFilter(**response_filter)) 
-
-            # Run the cache fetch operation in the background
-            await cache_documents(connector, response_filter, cache_key)
 
             if chunked and connector_id == ConnectorId.notion:
                 chunker = DocumentChunker(min_chunk_size=min_chunk_size, max_chunk_size=max_chunk_size)

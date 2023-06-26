@@ -5,6 +5,7 @@ import uuid
 import pdb
 import redis
 import aioredis
+import logging
 from fastapi import FastAPI, File, HTTPException, Depends, Body, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
@@ -44,14 +45,19 @@ from appstatestore.statestore import StateStore
 from models.models import (
     AppConfig,
     ConnectionFilter,
-    ConnectorId
+    ConnectorId,
+    DocumentConnector
 )
 from connectors.connector_utils import get_connector_for_id, get_conversation_connector_for_id, get_document_connector_for_id
 import uuid
 from logger import Logger
 from chunker.chunker import DocumentChunker
+
+# API responses logger
 logger = Logger()
 
+# Server logger
+log = logging.getLogger(__name__)
 
 app = FastAPI()
 app.add_middleware(
@@ -74,7 +80,12 @@ async def create_redis_pool():
 # TODO: put host in env var
 # TODO: check indexation on redis
 
+# ------- After SYNC
+# TODO: change user_is in generate_cache_key func to uri so --> {app_id}:{account_id}:{uri}
+# review TODO: implement zendesk filterinng logic first - uri, section 
 
+
+# Auth Funcs
 def validate_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     app_config = StateStore().get_config(credentials.credentials)
     if credentials.scheme != "Bearer" or app_config is None:
@@ -87,6 +98,7 @@ def validate_public_key(credentials: HTTPAuthorizationCredentials = Depends(bear
         raise HTTPException(status_code=401, detail="Invalid or missing token")
     return app_config
 
+# Cache Funcs
 def generate_cache_key(request: GetDocumentsRequest, config: AppConfig) -> str:
     account_id = request.account_id
     user_id = config.user_id
@@ -94,6 +106,30 @@ def generate_cache_key(request: GetDocumentsRequest, config: AppConfig) -> str:
     cache_key = f"{user_id}:{app_id}:{account_id}"
     return cache_key
 
+async def cache_documents(connector, response_filter, cache_key):
+    # Create a copy of the response_filter for the cache
+    cache_filter = dict(response_filter)  
+
+    # Omit URIs, section_filter & pagination from filter_kwargs
+    cache_filter['uris'] = None
+    cache_filter['section_filter_id'] = None
+    cache_filter['page_cursor'] = None
+    cache_filter['page_size'] = None
+
+    # Fetch documents for caching
+    cache_data = await connector.load(ConnectionFilter(**cache_filter))
+
+    # Store the data in Redis cache
+    if cache_data is not None:
+        try:
+            async_redis_pool = await create_redis_pool()
+            await async_redis_pool.set(cache_key, cache_data.json())
+            log.info(f"Cache documents stored successfully [connector_id: {response_filter['connector_id']}, account_id: {response_filter['account_id']}]")
+        except Exception as e:
+            log.error(f"Unable to fetch data to Redis for caching [connector_id: {response_filter['connector_id']}, account_id: {response_filter['account_id']}], err: {e}")
+
+
+# CRUD Operations
 @app.post(
     "/set-custom-connector-credentials",
     response_model=ConnectorStatusResponse,
@@ -349,19 +385,21 @@ async def get_documents(
     try:
         account_id = request.account_id
         uris = request.uris
+        chunked = request.chunked
+        min_chunk_size = request.min_chunk_size
+        max_chunk_size = request.max_chunk_size
 
         # Check if data is in cache using synchronous Redis client
         cache_key = generate_cache_key(request, config)
-        try:
-            cache_data = sync_redis_client.get(cache_key)
-            if cache_data:
-                # return data from cache
-                response_data = json.loads(cache_data)
-                return GetDocumentsResponse.parse_obj(response_data)
-        except Exception as e:
-            print(f"Error: Unable to get data from redis cache, err: {e}")
+        # try:
+        #     cache_data = sync_redis_client.get(cache_key)
+        #     if cache_data:
+        #         # return data from cache
+        #         response_data = json.loads(cache_data)
+        #         return GetDocumentsResponse.parse_obj(response_data)
+        # except Exception as e:
+        #     print(f"Error: Unable to get data from redis cache, err: {e}")
          
-
         # If connector_id is not provided, return documents from all connectors
         if not request.connector_id:
             connections = StateStore().get_connections(
@@ -373,43 +411,34 @@ async def get_documents(
         else:
             connector_ids = [request.connector_id]
 
-        chunked = request.chunked
-        min_chunk_size = request.min_chunk_size
-        max_chunk_size = request.max_chunk_size
-
         documents = []
-
         for connector_id in connector_ids:
-
             connector = get_document_connector_for_id(connector_id, config)
             if connector is None:
                 raise HTTPException(status_code=404, detail="Connector not found")
 
-            result = await connector.load(
-                ConnectionFilter(
-                    connector_id=connector_id, 
-                    account_id=account_id, 
-                    uris=uris, 
-                    section_filter_id=request.section_filter,
-                    page_cursor=request.page_cursor,
-                    page_size=request.page_size,
-                )
-            ) 
+            response_filter = {
+                "connector_id": connector_id,
+                "account_id": account_id,
+                "uris": uris,
+                "section_filter_id": request.section_filter,
+                "page_cursor": request.page_cursor,
+                "page_size": request.page_size,
+            }
+            result = await connector.load(ConnectionFilter(**response_filter)) 
+
+            # Run the cache fetch operation in the background
+            await cache_documents(connector, response_filter, cache_key)
+
             if chunked and connector_id == ConnectorId.notion:
                 chunker = DocumentChunker(min_chunk_size=min_chunk_size, max_chunk_size=max_chunk_size)
                 result = GetDocumentsResponse(documents=chunker.chunk(result.documents), next_cursor=result.next_page_cursor)
             documents.extend(result.documents)
+
         response = result
         response.documents = documents
         logger.log_api_call(config, Event.get_documents, request, response, None)
-
-        # Add fetched documents to cache using asynchronous Redis client
-        try:
-            async_redis_pool = await create_redis_pool()
-            await async_redis_pool.set(cache_key, response.json())
-        except Exception as e:
-            print(f"Error: Unable to fetch data to redis for caching, err: {e}")
-            
+   
         return response
     
     except Exception as e:

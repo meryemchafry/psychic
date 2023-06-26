@@ -128,6 +128,10 @@ class NotionConnector(DocumentConnector):
         # Return all sections whose parent is a workspace
         return [section for id, section in id_to_section.items() if id_to_parent_type[id] == 'workspace']
 
+
+    # TODO: oone option : mapping / tree of the nested sections
+    # TODO: doc of notion API
+    # TODO: cache filter for notion, gdrive, zendesk
     async def load(self, connection_filter: ConnectionFilter) -> GetDocumentsResponse:
         account_id = connection_filter.account_id
         uris = connection_filter.uris
@@ -171,8 +175,7 @@ class NotionConnector(DocumentConnector):
                         connector_id=self.connector_id,
                         account_id=account_id
                     ))
-
-            return all_notion_documents
+            return  GetDocumentsResponse(documents=all_notion_documents, next_page_cursor=next_cursor) 
         else:
             search_params = {}
 

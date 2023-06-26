@@ -33,7 +33,7 @@ class NotionParser:
         unprocessed_pages = [page_id]
         processed_pages = set()
         results: List[Dict] = []
-        all_pages = self.notion_search({})
+        all_pages, _ = self.notion_search({})
 
 
         if not all_pages:
@@ -46,6 +46,9 @@ class NotionParser:
             database_ids = []
             for page in all_pages:
                 # process the page and add the document to the results
+                print(f" \n  The page is {page}")
+                print(f" \n  The type of page is {type(page)}")
+
                 if page.get('id') == page_id:
                     doc, db_ids_in_page = self.process_page(page)
                     database_ids.extend(db_ids_in_page)

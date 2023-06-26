@@ -155,6 +155,7 @@ class ZendeskConnector(DataConnector):
             title=article['title']
             article_url = article["html_url"]
             body = article['body']
+            section_id= article['section_id']
             # text = BeautifulSoup(body, "html.parser").get_text()
             if body and title and article_url:
                 documents.append(
@@ -163,7 +164,8 @@ class ZendeskConnector(DataConnector):
                         content=body,
                         connector_id=self.connector_id,
                         account_id=account_id,
-                        uri=article_url
+                        uri=article_url,
+                        section_id=section_id
                     )
                 )
 

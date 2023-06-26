@@ -67,6 +67,7 @@ class Document(BaseModel):
     connector_id: ConnectorId
     account_id: str
     uri: Optional[str] = None
+    section_id: Optional[str] = None
 
 class GetDocumentsResponse(BaseModel):
     documents: List[Document]
